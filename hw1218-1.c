@@ -22,22 +22,23 @@ typedef struct Node Node;
 
 struct Node{
 	int posi; //ノードのある位置
-	int list[N]; //隣接リスト *構造体でも配列を使う場合は確保
+	int list[M]; //隣接リスト *構造体でも配列を使う場合は確保
 };
 
 static int node_used = 0;
 static Node nodes[MAX_NODES];
 static Node* node[N];
-const int final_state[N] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0}; //ゴール
+static int final_state[N] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0}; //ゴール
 static int initial_state[N];
 
 void breadth_first_search();
-bool check_same_state(int queue[MAX_STATES][N], int rear);
+bool check_same_state(int* queue[], int rear);
 Node* create_node(); //ノード作成
 void create_list(); //隣接リスト作成
 int search_position(int n); //目的の位置にいるピースの数字を返す
-int* copy_state(int copy[N], int original[N]);
-int compare_state(int st1[N], int st2[N]);
+int* copy_state(int copy[], int original[]);
+int compare_state(int st1[], int st2[]);
+void print_state(int queue[]);
 
 int main(){
 	int i, x;
@@ -65,6 +66,17 @@ int main(){
 	breadth_first_search();
 }
 
+void print_state(int queue[]){
+	int i;
+	for(i = 0; i < N; i++){
+		printf("%d ", queue[i]);
+		if(i % M == M-1){
+			printf("\n");
+		}
+	}
+	printf("\n");
+}
+
 int* copy_state(int copy[], int original[]){
 	int i;
 	for(i = 0; i < N; i++){
@@ -76,71 +88,83 @@ int* copy_state(int copy[], int original[]){
 int compare_state(int s1[], int s2[]){
 	int i;
 	for(i = 0; i < N; i++){
-	//	if(s1[i] != s2[i]){
-	//		return false;
-	//	}
+		if(s1[i] != s2[i]){
+			return 0;
+		}
 	}
-	return true;
+	return 1;
 }
 
 void breadth_first_search(){
 	int front = 0, rear = 1;
-	int i, j, n, s, p, keep, space[MAX_STATES], queue[MAX_STATES][N]; //space position
-	space[front] = node[0]->posi; //空白の場所の初期状態 
+	int i, j, k[M], n[MAX_STATES], s[MAX_STATES], p[MAX_STATES], keep, space[MAX_STATES], queue[MAX_STATES][N];
+	space[front] = node[0]->posi; //空白の場所の初期状態
+//	printf("spaceの場所 = %d\n", space[front]);
+//	space[rear] = node[0]->posi;
 	copy_state(queue[front], initial_state); //初期状態をキューに積む
-//	printf("n = %d\n", n);
-//	printf("sp = %d\n", space[front]);
-/*	for(j = 0; j < N; j++){
-		printf("%d ", queue[front][j]);
-		if(j % M == M-1){
-			printf("\n");
+	
+	while(true){
+		i = 0;
+		printf("spaceの場所 = %d\n", space[front]);
+		s[front] = space[front]; //取り出したキューの空白がある場所
+		while(true){ //空白からつながるリストを見る
+			if((n[rear-1] = node[0]->list[i]) == -1 || i == 4){ //nは隣接したピースの数字
+				break;
+			}
+//			printf("i = %d\n", i);
+//			printf("\n");
+			
+			p[rear-1] = node[n[rear-1]]->posi; //隣接したピースのある場所
+						
+			copy_state(queue[rear], queue[front]); //移動した状態をキューに積むために前の状態をコピー
+		//	printf("i = %d, 空白がある場所 = %d, 隣接したピースの数字 = %d, 隣接したピースのある場所 = %d\n", i, s[front], n[rear-1], p[rear-1]);
+			queue[rear][s[front]] = n[rear-1]; //0(空白)があった場所に、隣接したピースの数字を代入
+			queue[rear][p[rear-1]] = 0; //隣接したピースがあった場所に、0を代入
+
+			space[rear] = p[rear-1]; //空白情報に、隣接したピースの位置情報を代入
+
+			if(compare_state(queue[rear], final_state) == 1){
+			//	print_state(queue[rear]);
+			//	return;
+				break;
+			}
+			print_state(queue[rear]);
+			rear++;
+			i++;
+		}
+	//	break;
+
+	//	printf("ピースの位置 = %d, ピースの数字 = %d, 空白の位置 = %d\n", p[front], n[front], s[front]);
+		for(j = 0; j < M; j++){
+	//		printf("元の空白のlist = %d, もとのピースのlist = %d\n", node[0]->list[j], node[n[front]]->list[j]);
+			if(node[n[front]]->list[j] != 0){
+				k[j] =  node[0]->list[j];
+				node[0]->list[j] = node[n[front]]->list[j];
+				node[n[front]]->list[j] = k[j];
+			}
+		}
+		node[0]->posi = p[front]; //空白のあった場所に隣接したピースの位置情報を入れる
+		node[n[front]]->posi = s[front]; //隣接したピースのあった場所に空白の位置情報を入れる
+
+		front++;
+		if(front == 3){
+			break;
 		}
 	}
-*/	
-
-	i = 0;
-	while(true){ //空白からつながるリストを見る
-		s = space[front]; //取り出したキューの空白がある場所
-		p = node[s]->list[i]; //隣接したピースのある場所
-		n = search_position(p); //隣接したピースの数字
-		if(p == -1){
-			break;
-		}
-		copy_state(queue[rear], queue[front]); //移動した状態をキューに積むために前の状態をコピー
-	//	printf("空白がある場所 = %d, 隣接したピースのある場所 = %d, 隣接したピースの数字 = %d\n", s, p, n);
-		queue[rear][s] = n; //0(空白)があった場所に、隣接したピースの数字を代入
-		queue[rear][p] = 0; //隣接したピースがあった場所に、0を代入
-
-		node[s]->posi = p; //空白のあった場所に隣接したピースの位置情報を入れる
-		node[n]->posi = s; //隣接したピースのあった場所に空白の位置情報を入れる
-		space[rear] = p; //空白情報に、隣接したピースの位置情報を代入
-		printf("i=%d\n", i);
-		for(j = 0; j < N; j++){
-			printf("%d ", queue[rear][j]);
-			if(j % M == M-1){
-				printf("\n");
-			}
-		}
-		printf("\n");
-		i++;
-
-/*		if(check_same_state(&queue[i], rear) == true){
-			for(j = 0; j < N; j++){
-				printf("%d ", queue[rear][j]);
-			}
-			printf("\n");
-			break;
-		}*/
-//		if(memcmp(queue[i], final_state, N) )
+	for(i = 1; i < rear; i++){
+	//	printf("spaceの場所=%d\n", space[i]);
+	//	printf("ピースの数字= %d\n", n[i-1]);
+	//	print_state(queue[i]);
+	
 	}
 }
 
-bool check_same_state(int queue[MAX_STATES][N], int rear){
+bool check_same_state(int* queue[], int rear){
 	int i;
 	for(i = 0; i <= rear; i++){
-	//	if(compare_state(queue[i], final_state) == true){
-	//		return true;
-	//	}
+		if(compare_state(queue[i], queue[rear])){
+			return true;
+		}
 	}
 	return false;
 }
@@ -175,6 +199,7 @@ void create_list(){
 		}else if(x == N-M){ //左下
 			node[i]->list[0] = search_position(x+1);
 			node[i]->list[1] = search_position(x-M);
+	//		printf("添字 = %d, posi = %dで0 = %d, 1 = %d, 2 = %d\n", i, x, node[i]->list[0], node[i]->list[1], node[i]->list[2]);
 		}else if(x == M-1){ //右上
 			node[i]->list[0] = search_position(x-1);
 			node[i]->list[1] = search_position(x+M);
@@ -200,18 +225,27 @@ void create_list(){
 			node[i]->list[0] = search_position(x-1);
 			node[i]->list[1] = search_position(x+M);
 			node[i]->list[2] = search_position(x-M);
-			printf("添字 = %d, posi = %dで0 = %d, 1 = %d, 2 = %d\n", i, x, node[i]->list[0], node[i]->list[1], node[i]->list[2]);
+		//	printf("x-1 = %d\n", x-1);
+		//	printf("添字 = %d, posi = %dで0 = %d, 1 = %d, 2 = %d\n", i, x, node[i]->list[0], node[i]->list[1], node[i]->list[2]);
 
-		}else{ //4方向に移動可能な場合
+		}else if(x % M == 1 || x % M == 2){ //4方向に移動可能な場合
 			node[i]->list[0] = search_position(x+1);
-			node[i]->list[0] = search_position(x-1);
-			node[i]->list[1] = search_position(x+M);
-			node[i]->list[2] = search_position(x-M);
+			node[i]->list[1] = search_position(x-1);
+			node[i]->list[2] = search_position(x+M);
+			node[i]->list[3] = search_position(x-M);
+	//		printf("4 = %d\n", node[i]->list[4]);
+	//		printf("ピース%d, posi = %dで0 = %d, 1 = %d, 2 = %d, 3 = %d\n", i, x, node[i]->list[0], node[i]->list[1], node[i]->list[2], node[i]->list[3]);
 		}
 //		printf("添字 = %d, posi = %dで0 = %d, 1 = %d, 2 = %d\n", i, x, node[i]->list[0], node[i]->list[1], node[i]->list[2]);
+//		printf("ピースの数字 = %d\n", i);
+		for(j = 0; node[i]->list[j] != -1; j++){
+//				printf("j = %d でlist = %d\n", j, node[i]->list[j]);
+			}
+//			printf("\n");
 	}
 }
 
+//場所を与えたら中身の数字を返す
 int search_position(int n){
 	int i;
 	for(i = 0; i < N; i++){
