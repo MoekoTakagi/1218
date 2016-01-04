@@ -76,20 +76,13 @@ int main(){
 void print_state(int queue[]){
 	int i;
 	for(i = 0; i < N; i++){
-		if(queue[i] >= 1 && queue[i] <= 9){
-			printf("%d ", queue[i]);
-		}else if(queue[i] >= 10 && queue[i] <= 15){
-			printf("%c ", queue[i]+87);
-		}else if(queue[i] == 0){
-			printf("- ");
-		}
+		printf("%d ", queue[i]);
 		if(i % M == M-1){
 			printf("\n");
 		}
 	}
 	printf("\n");
 }
-
 
 int* copy_state(int copy[], int original[]){
 	int i;
@@ -111,137 +104,68 @@ int compare_state(int s1[], int s2[]){
 
 void breadth_first_search(){
 	int front = 0, rear = 1;
-	int i, j = 0, n, p, l, f_c = 0, r_c[MAX_STATES] = {0}, keep, queue[MAX_STATES][N], space, sp, counter = 0, sp_before, before_node[MAX_STATES], before_node_posi[MAX_STATES];
+	int i, j, n, p, l, keep, queue[MAX_STATES][N], space, sp;
 	sp = node[0]->posi; //空白の場所の初期状態
 	space = 0; //空白のあるピースの数字
 	copy_state(queue[front], initial_state); //初期状態をキューに積む
-	before_node[0] = 0;
-	before_node_posi[0] = 0;
-//	original_space[0] = 0;
 
 	while(true){
-		printf("\nspaceの場所 = %d\n", sp); //取り出したキューの空白がある場所
+		printf("spaceの場所 = %d\n", sp); //取り出したキューの空白がある場所
 
 		for(i = 0; i < M; i++){
-	//		printf("次リスト%d = %d\n", i, node[space]->list[i]);
+//			printf("次リスト%d = %d\n", i, node[]->list[j]);
 		}
 		i = 0;
 		while(true){ //空白からつながるリストを見る
+			
 			if((n = node[space]->list[i]) == -1 || i == 4){ //nは隣接したピースの数字
 				break;
 			}
-			
+			printf("リスト%d = %d\n", i, n);
 //			printf("n = %d\n", n);
 //			printf("\n");
 
 			p = node[n]->posi; //隣接したピースのある場所
-	//		printf("リスト%dが%dにある\n", i, p);
-	//		printf("そのデータは = %d\n", node[n]->data);
-			before_node_posi[rear] = front; //前のノードがあるキューの場所
-	//		printf("前のノードがあるキューの場所は%d\n", before_node_posi[rear]);
-	//		printf("そのキューの中身は\n");
-	//		print_state(queue[before_node_posi[rear]]);
-			printf("nのデータは%d\n", node[n]->data);
-			copy_state(queue[rear], queue[before_node_posi[rear]]); //移動した状態をキューに積むために前の状態をコピー
+	//		printf("隣接したピースのある場所p = %d\n", p);
+			copy_state(queue[rear], queue[front]); //移動した状態をキューに積むために前の状態をコピー
 		//	printf("i = %d, 空白がある場所 = %d, 隣接したピースの数字 = %d, 隣接したピースのある場所 = %d\n", i, s[front], n[rear-1], p[rear-1]);
 			queue[rear][sp] = node[n]->data; //0(空白)があった場所に、隣接したピースの数字を代入
 			queue[rear][p] = 0; //隣接したピースがあった場所に、0を代入
 
-			before_node[rear] = sp; //今のノードにとっての前のノードの空白のある場所
-			
+//			s[rear] = p; //空白情報に、隣接したピースの位置情報を代入
 
-		//	if(sp == 6){
-				print_state(queue[rear]);
-		//	}
-			if(compare_state(queue[rear], final_state) == 1){
-				for(j = 0; j < rear; j++){
-		//			printf("%d番目の空白のある場所 = %d\n", j, before_node[j]);
-				}
-				printf("%d\n", counter+1);
-				return;
-			}
-	//		r_c[front]++;
+			print_state(queue[rear]);
 			rear++;
 			i++;
 		}
+//		printf("front = %d, s1 = %d, s2 = %d\n", front, s[0], s[1]);
 
-//		printf("rearは%d回\n", r_c[front]);
-//		printf("frontは%d回\n", f_c);
-
-		if(front != 0){ //元に戻す作業
-			l = search_position(before_node[front]); //元の空白のあるピースの数字
-			for(i = 0; i < N; i++){
-			//	printf("%dの\n", i);
-				for(j = 0; j < M; j++){
-			//		printf("リストは%d\n", node[i]->list[j]);
-
-					if(node[i]->list[j] == 0 && i != l){
-						node[i]->list[j] = node[l]->data;
-					//	printf("%dlist%dは%d\n", i, j, node[i]->list[j]);
-					}else if(node[i]->list[j] == node[l]->data && i != space){
-						node[i]->list[j] = 0;
-					}
-				//	printf("list%dは%d\n", j, node[i]->list[j]);
-				}
-			//	printf("\n");
-			}
-		//	printf("\n");
-	//		printf("元の空白のある場所は%d\n", before_node[front]);
-	//		printf("元の空白のあるピースの数字は%d\n", l);
-			node[space]->data = node[l]->data; //今の空白のあるデータに元の空白のデータを入れる
-			node[l]->data = 0; //元の空白のあるデータに0を入れる
-			space = l; //元の空白のあるピースの数字を古い空白とする
-		}
 		front++;
 		for(i = 0; i < N; i++){
 			if(queue[front][i] == 0){
-				sp = i; //spは次の空白のある場所
+				sp = i;
 			}
 		}
 
-//		print_state(queue[front-1]);
-
+//		o = search_position(s[front-1]); //今の空白のある場所のピースの数字	
 		l = search_position(sp); //新しい空白のあるピースの数字
-
+		keep = node[space]->data;	
+		node[space]->data = node[l]->data;
+		node[l]->data = keep;
+		
 		for(i = 0; i < N; i++){
-	//		printf("変更前%dの\n", i);
-			for(j = 0; j < M; j++){
-	//			printf("リストは%d ", node[i]->list[j]);
+			if(node[i]->data == 0){
+				space = i; //空白のあるピースの数字
 			}
-	//		printf("\n");
-		}
-	//	printf("\n");
-		//新しい空白と入れ替え
+		}		
 
-	//	printf("\n");
-		node[space]->data = node[l]->data; //古い空白のあるデータに新しい空白のデータを入れる
-		node[l]->data = 0; //新しい空白のあるデータに0を入れる
-
-		for(i = 0; i < N; i++){
-	//		printf("後%dの\n", i);
-			for(j = 0; j < M; j++){
-				if(node[i]->list[j] == 0){
-					node[i]->list[j] = node[l]->data;
-			//		printf("うき\n");
-				}else if(node[i]->list[j] == node[l]->data){
-					node[i]->list[j] = 0;
-			//		printf("きたよ\n");
-				}
-	//			printf("リストは%d ", node[i]->list[j]);
+/*		for(i = 0; i < N; i++){
+			if(node[i]->data == 0){
+				l = i; //空白のあるピースの数字
 			}
-	//		printf("\n");
-		}
-
-		space = l;	
-
-
-		if(front == 5){
-	//		break;
-		}
-		if(f_c == r_c[j]){
-//			f_c = 0;
-//			counter++;
-//			j++;
+		}*/
+		if(front == 2){
+			break;
 		}
 
 	}
